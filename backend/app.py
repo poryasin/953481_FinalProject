@@ -16,7 +16,12 @@ from routes.recipe import recipe_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app,
+     origins=["http://localhost:5173"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True
+)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
     "DATABASE_URL",
@@ -59,5 +64,5 @@ def search_api():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        print("starting flask...")
+    print("Starting flask...")
     app.run(debug=True, port=5000)
