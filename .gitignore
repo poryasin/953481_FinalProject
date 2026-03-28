@@ -1,3 +1,8 @@
 
 .idea
 resources
+frontend/package-lock.json
+frontend/package.json
+frontend/tsconfig.app.json
+frontend/tsconfig.json
+frontend/tsconfig.node.json
