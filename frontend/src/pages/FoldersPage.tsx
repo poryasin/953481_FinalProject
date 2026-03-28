@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FolderOpen, Plus } from "lucide-react";
+import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import { API_BASE_URL } from "../api/config";
 import { useNavigate } from "react-router-dom";
@@ -18,14 +20,15 @@ function FoldersPage() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
   const fetchFolders = async () => {
-    const token = localStorage.getItem("token");
+    const tokenFromStorage = localStorage.getItem("token");
 
-    if (!token) {
+    if (!tokenFromStorage) {
       setFolders([]);
       setError("");
       return;
@@ -38,7 +41,7 @@ function FoldersPage() {
       const res = await fetch(`${API_BASE_URL}/folders`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenFromStorage}`,
         },
       });
 
@@ -73,12 +76,10 @@ function FoldersPage() {
     fetchFolders();
   }, []);
 
-  const handleCreateFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateFolder = async () => {
+    const tokenFromStorage = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
+    if (!tokenFromStorage) {
       setError("Please login first to create a folder");
       return;
     }
@@ -96,7 +97,7 @@ function FoldersPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenFromStorage}`,
         },
         body: JSON.stringify({
           folder_name: folderName.trim(),
@@ -117,6 +118,7 @@ function FoldersPage() {
       }
 
       setFolderName("");
+      setDialogOpen(false);
       fetchFolders();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -139,95 +141,146 @@ function FoldersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-white text-gray-900">
+    <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Folders</h1>
-            <p className="mt-2 text-gray-600">
-              Organize your bookmarked recipes into folders
+            <div className="flex items-center gap-3">
+              <FolderOpen className="h-7 w-7 text-orange-500" />
+              <h1 className="text-3xl font-bold text-gray-900">Folders</h1>
+            </div>
+            <p className="mt-2 text-gray-500">
+              Organize your bookmarked recipes into collections.
             </p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            disabled={!isLoggedIn}
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            <Plus className="h-4 w-4" />
+            New Folder
+          </button>
         </div>
 
         {!isLoggedIn && (
-          <div className="mb-6 rounded-xl bg-yellow-50 p-4 text-yellow-700 shadow-sm ring-1 ring-yellow-200">
+          <div className="mt-6 rounded-2xl bg-yellow-50 p-4 text-yellow-700 shadow-sm ring-1 ring-yellow-200">
             You can open this page without logging in, but you need to login to
             create folders and view bookmarks inside them.
           </div>
         )}
 
-        <form
-          onSubmit={handleCreateFolder}
-          className="mb-8 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200"
-        >
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Folder name
-          </label>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
-              placeholder="Enter folder name"
-              disabled={!isLoggedIn || creating}
-              className="flex-1 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-            />
-
-            <button
-              type="submit"
-              disabled={!isLoggedIn || creating}
-              className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
-            >
-              {creating ? "Creating..." : "Create Folder"}
-            </button>
+        {error && (
+          <div className="mt-6 rounded-2xl bg-red-50 p-4 text-red-600 shadow-sm ring-1 ring-red-200">
+            {error}
           </div>
-        </form>
+        )}
 
         {loading && (
-          <p className="rounded-xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
+          <div className="mt-6 rounded-2xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
             Loading folders...
-          </p>
+          </div>
         )}
 
-        {error && (
-          <p className="mb-6 rounded-xl bg-red-50 p-4 text-center text-red-600 shadow-sm ring-1 ring-red-200">
-            {error}
-          </p>
-        )}
-
-        {!loading && folders.length === 0 && (
-          <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
-            {isLoggedIn
-              ? "No folders found."
-              : "No folders to display. Please login to create folders."}
-          </p>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {folders.map((folder) => (
-            <button
-              key={folder.folder_id}
-              type="button"
-              onClick={() => handleOpenFolder(folder.folder_id)}
-              className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <h2 className="text-lg font-semibold text-gray-900">
-                {folder.folder_name}
+        {!loading && folders.length > 0 ? (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {folders.map((folder) => (
+              <motion.button
+                key={folder.folder_id}
+                type="button"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => handleOpenFolder(folder.folder_id)}
+                className="group relative rounded-2xl border border-gray-200 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-md"
+              >
+                <FolderOpen className="h-10 w-10 text-orange-400" />
+                <h3 className="mt-3 text-lg font-semibold text-gray-900">
+                  {folder.folder_name}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Folder ID: {folder.folder_id}
+                  {folder.created_at ? ` · ${folder.created_at}` : ""}
+                </p>
+                <p className="mt-3 text-sm font-medium text-orange-500">
+                  View bookmarks →
+                </p>
+              </motion.button>
+            ))}
+          </div>
+        ) : (
+          !loading && (
+            <div className="mt-16 text-center">
+              <FolderOpen className="mx-auto h-16 w-16 text-gray-300" />
+              <h2 className="mt-4 text-xl font-semibold text-gray-900">
+                No folders yet
               </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Folder ID: {folder.folder_id}
+              <p className="mt-2 text-gray-500">
+                {isLoggedIn
+                  ? "Create your first folder to start organizing recipes."
+                  : "Please login to create your first folder."}
               </p>
-              <p className="mt-3 text-sm font-medium text-orange-500">
-                View bookmarks →
-              </p>
-            </button>
-          ))}
-        </div>
+            </div>
+          )
+        )}
       </main>
+
+      {dialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => {
+            if (!creating) setDialogOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-semibold text-gray-900">
+              Create New Folder
+            </h2>
+
+            <div className="mt-4 space-y-4">
+              <input
+                type="text"
+                placeholder="Folder name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleCreateFolder();
+                  }
+                }}
+                disabled={creating}
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 disabled:bg-gray-100"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDialogOpen(false)}
+                  disabled={creating}
+                  className="flex-1 rounded-xl border border-gray-300 px-4 py-3 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCreateFolder}
+                  disabled={creating}
+                  className="flex-1 rounded-xl bg-orange-500 px-4 py-3 font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                  {creating ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import { useEffect, useState, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
+import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import RecipeCard from "../components/RecipeCard";
 import { API_BASE_URL } from "../api/config";
+import heroImage from "../assets/background.jpeg";
+
 
 type Recipe = {
   recipe_id?: number;
@@ -46,9 +50,7 @@ function parseList(value: unknown): string[] {
   if (!value) return [];
 
   if (Array.isArray(value)) {
-    return value
-      .map((item) => String(item).trim())
-      .filter(Boolean);
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
   const text = String(value).trim();
@@ -57,24 +59,17 @@ function parseList(value: unknown): string[] {
   try {
     const parsed = JSON.parse(text.replace(/'/g, '"'));
     if (Array.isArray(parsed)) {
-      return parsed
-        .map((item) => String(item).trim())
-        .filter(Boolean);
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
     }
   } catch {
-    // ignore parse error
+    //
   }
 
   return text
     .replace(/^\[/, "")
     .replace(/\]$/, "")
     .split(/\||\n|,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
-    .map((item) =>
-      item
-        .replace(/^["']/, "")
-        .replace(/["']$/, "")
-        .trim()
-    )
+    .map((item) => item.replace(/^["']/, "").replace(/["']$/, "").trim())
     .filter(Boolean);
 }
 
@@ -82,9 +77,7 @@ function parseSteps(value: unknown): string[] {
   if (!value) return [];
 
   if (Array.isArray(value)) {
-    return value
-      .map((item) => String(item).trim())
-      .filter(Boolean);
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
   const text = String(value).trim();
@@ -93,24 +86,17 @@ function parseSteps(value: unknown): string[] {
   try {
     const parsed = JSON.parse(text.replace(/'/g, '"'));
     if (Array.isArray(parsed)) {
-      return parsed
-        .map((item) => String(item).trim())
-        .filter(Boolean);
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
     }
   } catch {
-    // ignore parse error
+    //
   }
 
   return text
     .replace(/^\[/, "")
     .replace(/\]$/, "")
     .split(/\n+|\|\s*|\d+\.\s+/)
-    .map((step) =>
-      step
-        .replace(/^["']/, "")
-        .replace(/["']$/, "")
-        .trim()
-    )
+    .map((step) => step.replace(/^["']/, "").replace(/["']$/, "").trim())
     .filter(Boolean);
 }
 
@@ -135,7 +121,7 @@ function parseImage(value: unknown): string {
       return String(parsed[0] || "").trim();
     }
   } catch {
-    // ignore
+    //
   }
 
   const cleaned = text
@@ -174,15 +160,11 @@ function RecipeModal({
   const recipeName = recipe.Name || recipe.name || "Unknown";
   const recipeCategory = recipe.RecipeCategory || recipe.category || "-";
 
-const imageSrc = parseImage(
-  recipe.Images ||
-    recipe.image_url ||
-    recipe.images ||
-    recipe.image ||
-    ""
-);
+  const imageSrc = parseImage(
+    recipe.Images || recipe.image_url || recipe.images || recipe.image || ""
+  );
 
-   const ingredients = parseList(
+  const ingredients = parseList(
     recipe.RecipeIngredientParts ||
       recipe.ingredient_parts ||
       (recipe as { ingredients?: string[] | string }).ingredients ||
@@ -196,13 +178,13 @@ const imageSrc = parseImage(
       []
   );
 
-   return (
+  return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
@@ -222,7 +204,7 @@ const imageSrc = parseImage(
         </div>
 
         <div className="space-y-6 px-6 py-6">
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
             {imageSrc ? (
               <img
                 src={imageSrc}
@@ -230,7 +212,8 @@ const imageSrc = parseImage(
                 className="h-72 w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
-                  const fallback = e.currentTarget.nextElementSibling as HTMLDivElement | null;
+                  const fallback =
+                    e.currentTarget.nextElementSibling as HTMLDivElement | null;
                   if (fallback) fallback.classList.remove("hidden");
                 }}
               />
@@ -246,7 +229,7 @@ const imageSrc = parseImage(
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
               <h3 className="mb-3 text-lg font-semibold text-gray-900">
                 Ingredients
               </h3>
@@ -264,7 +247,7 @@ const imageSrc = parseImage(
               )}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
               <h3 className="mb-3 text-lg font-semibold text-gray-900">
                 Cooking Steps
               </h3>
@@ -284,7 +267,7 @@ const imageSrc = parseImage(
           </div>
 
           {isLoggedIn ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Save to Bookmark
               </h3>
@@ -341,7 +324,7 @@ const imageSrc = parseImage(
               </button>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
               <h3 className="mb-3 text-lg font-semibold text-gray-900">
                 Bookmark
               </h3>
@@ -376,6 +359,8 @@ function Homepage() {
   const [error, setError] = useState<string>("");
   const [randomRecipes, setRandomRecipes] = useState<Recipe[]>([]);
   const [randomLoading, setRandomLoading] = useState<boolean>(false);
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
@@ -465,8 +450,10 @@ function Homepage() {
         throw new Error("Failed to fetch search results");
       }
 
-      const data: Recipe[] = await res.json();
-      setResults(data);
+      const data = await res.json();
+      setResults(Array.isArray(data.results) ? data.results : []);
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+      setActiveCategory("All");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -499,6 +486,11 @@ function Homepage() {
 
     if (!selectedRecipe) {
       alert("No recipe selected");
+      return;
+    }
+
+    if (!selectedRecipe.recipe_id) {
+      alert("Recipe ID not found");
       return;
     }
 
@@ -542,37 +534,95 @@ function Homepage() {
     }
   };
 
+
+  const sourceRecipes =
+    results.length > 0 ? results : !isLoggedIn ? randomRecipes : [];
+
+  const categories = [
+    "All",
+    ...Array.from(
+      new Set(
+        sourceRecipes
+          .map((recipe) => recipe.RecipeCategory || recipe.category)
+          .filter(Boolean) as string[]
+      )
+    ),
+  ];
+
+  const filteredRecipes =
+    activeCategory === "All"
+      ? sourceRecipes
+      : sourceRecipes.filter(
+          (recipe) =>
+            (recipe.RecipeCategory || recipe.category) === activeCategory
+        );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-white text-gray-900">
+    <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
 
-      <header className="mx-auto max-w-6xl px-4 pb-8 pt-12 text-center">
-        <div className="mx-auto max-w-3xl">
-          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-            Recipe Search
-          </h1>
-          <p className="mt-3 text-base text-gray-600 md:text-lg">
-            Search by dish name, ingredients, or cooking process
-          </p>
+      <section className="relative h-[420px] overflow-hidden">
+        <img
+          src={heroImage}
+          alt="background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
 
-          <div className="mt-8 flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-gray-200 sm:flex-row">
-            <input
-              type="text"
-              placeholder="Try: spicy chicken, garlic pasta, fried rice..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
-            />
-            <button
-              onClick={handleSearch}
-              className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white transition hover:bg-orange-600"
-            >
-              Search
-            </button>
-          </div>
+        <div className="relative mx-auto max-w-6xl px-4 py-20 md:py-28">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-4xl font-bold text-white md:text-5xl">
+              Discover Delicious Recipes
+            </h1>
+            <p className="mt-4 text-lg text-white/90">
+              Search, explore, and save your favorite recipes in one place.
+            </p>
+
+            <div className="relative mt-8 max-w-2xl">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search recipes by name, ingredients, or cooking steps..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="h-14 w-full rounded-full border-none bg-white pl-12 pr-36 text-gray-900 shadow-xl outline-none"
+              />
+              <button
+                onClick={handleSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-orange-500 px-6 py-3 font-medium text-white transition hover:bg-orange-600"
+              >
+                Search
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </header>
+      </section>
+
+      {categories.length > 1 && (
+        <section className="mx-auto max-w-6xl px-4 py-6">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
+                  activeCategory === cat
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-orange-100"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <main className="mx-auto max-w-6xl px-4 pb-12">
         {foldersLoading && (
@@ -593,44 +643,89 @@ function Homepage() {
           </p>
         )}
 
-        {!loading && !error && results.length === 0 && isLoggedIn && (
-          <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
-            No results yet. Start searching.
-          </p>
-        )}
-
         {!foldersLoading && isLoggedIn && folders.length === 0 && (
           <p className="mt-4 rounded-xl bg-yellow-50 p-4 text-center text-yellow-700 shadow-sm ring-1 ring-yellow-200">
             No folders found. Please create a folder first before bookmarking.
           </p>
         )}
 
+        {!loading && !error && isLoggedIn && results.length === 0 && (
+          <div className="rounded-2xl bg-gray-50 p-8 text-center ring-1 ring-gray-200">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Start your search
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Search by dish name, ingredients, or cooking process.
+            </p>
+          </div>
+        )}
+
+        {!loading && suggestions.length > 0 && (
+  <div className="mb-4 rounded-xl bg-orange-50 p-4 text-orange-700 shadow-sm ring-1 ring-orange-200">
+    <p className="text-sm">
+      Did you mean{" "}
+      <button
+        type="button"
+        onClick={() => {
+          setQuery(suggestions[0]);
+          setTimeout(() => {
+            const run = async () => {
+              try {
+                setLoading(true);
+                setError("");
+                const res = await fetch(
+                  `${API_BASE_URL}/search?q=${encodeURIComponent(suggestions[0])}`
+                );
+                const data = await res.json();
+                setResults(Array.isArray(data.results) ? data.results : []);
+                setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+                setActiveCategory("All");
+              } catch (err) {
+                setError("Failed to fetch search results");
+              } finally {
+                setLoading(false);
+              }
+            };
+            run();
+          }, 0);
+        }}
+        className="font-semibold underline hover:text-orange-900"
+      >
+        {suggestions[0]}
+      </button>
+      ?
+    </p>
+  </div>
+)}
+
         {!isLoggedIn && (
-          <section className="mt-8">
+          <section className="mt-2">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Random Recipes
+                {results.length > 0 ? "Search Results" : "Random Recipes"}
               </h2>
 
-              <button
-                onClick={fetchRandomRecipes}
-                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-              >
-                Random Again
-              </button>
+              {!results.length && (
+                <button
+                  onClick={fetchRandomRecipes}
+                  className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+                >
+                  Random Again
+                </button>
+              )}
             </div>
 
-            {randomLoading ? (
+            {randomLoading && results.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
                 Loading random recipes...
               </p>
-            ) : randomRecipes.length === 0 ? (
+            ) : filteredRecipes.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
-                No random recipes found.
+                No recipes found.
               </p>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {randomRecipes.map((item, index) => (
+                {filteredRecipes.map((item, index) => (
                   <RecipeCard
                     key={
                       item.recipe_id ??
@@ -645,24 +740,33 @@ function Homepage() {
           </section>
         )}
 
-        {results.length > 0 && (
-          <section className="mt-8">
+        {isLoggedIn && results.length > 0 && (
+          <section className="mt-2">
             <h2 className="mb-4 text-2xl font-bold text-gray-900">
               Search Results
+              <span className="ml-2 text-base font-normal text-gray-500">
+                ({filteredRecipes.length})
+              </span>
             </h2>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {results.map((item, index) => (
-                <RecipeCard
-                  key={
-                    item.recipe_id ??
-                    `${item.Name ?? item.name ?? "recipe"}-${index}`
-                  }
-                  recipe={item}
-                  onViewDetails={openRecipeModal}
-                />
-              ))}
-            </div>
+            {filteredRecipes.length === 0 ? (
+              <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+                No recipes found in this category.
+              </p>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredRecipes.map((item, index) => (
+                  <RecipeCard
+                    key={
+                      item.recipe_id ??
+                      `${item.Name ?? item.name ?? "recipe"}-${index}`
+                    }
+                    recipe={item}
+                    onViewDetails={openRecipeModal}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
       </main>

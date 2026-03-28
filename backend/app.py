@@ -44,7 +44,10 @@ def search_api():
     q = request.args.get("q", "").strip()
 
     if not q:
-        return jsonify([]), 200
+        return jsonify({
+            "results": [],
+            "suggestions": []
+        })
 
     try:
         results = search_recipes(q)

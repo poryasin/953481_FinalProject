@@ -1,5 +1,14 @@
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {
+  Bookmark,
+  FolderOpen,
+  Home,
+  LogIn,
+  ChefHat,
+  LogOut,
+  User as UserIcon,
+} from "lucide-react";
 
 type User = {
   user_id: number;
@@ -7,6 +16,32 @@ type User = {
   email: string;
   created_at?: string;
 };
+
+type NavItemProps = {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  mobile?: boolean;
+};
+
+function NavItem({ to, icon, label, active, mobile }: NavItemProps) {
+  return (
+    <Link
+      to={to}
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        mobile ? "flex-col gap-0.5 px-4 text-xs" : ""
+      } ${
+        active
+          ? "bg-orange-100 text-orange-600"
+          : "text-gray-500 hover:text-gray-900"
+      }`}
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
 
 function Navbar() {
   const location = useLocation();
@@ -27,12 +62,7 @@ function Navbar() {
     }
   }, [location.pathname]);
 
-  const linkClass = (path: string) =>
-    `rounded-lg px-4 py-2 text-sm font-medium transition ${
-      location.pathname === path
-        ? "bg-orange-500 text-white"
-        : "text-gray-700 hover:bg-orange-100 hover:text-orange-600"
-    }`;
+  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -42,43 +72,96 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link to="/" className="text-xl font-bold text-orange-500">
-          Recipe App
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-2">
+          <ChefHat className="h-7 w-7 text-orange-500" />
+          <span className="text-xl font-bold text-gray-900">Recipe</span>
         </Link>
 
+        <div className="hidden items-center gap-1 md:flex">
+          <NavItem
+            icon={<Home className="h-4 w-4" />}
+            label="Home"
+            active={isActive("/")}
+          />
+          <NavItem
+            to="/bookmarks"
+            icon={<Bookmark className="h-4 w-4" />}
+            label="Bookmarks"
+            active={isActive("/bookmarks")}
+          />
+          <NavItem
+            to="/folders"
+            icon={<FolderOpen className="h-4 w-4" />}
+            label="Folders"
+            active={isActive("/folders")}
+          />
+        </div>
+
         <div className="flex items-center gap-2">
-
-          <Link to="/bookmarks" className={linkClass("/bookmarks")}>
-            Bookmark
-          </Link>
-
-          <Link to="/folders" className={linkClass("/folders")}>
-            Folder
-          </Link>
-
           {!user ? (
-            <Link to="/login" className={linkClass("/login")}>
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Login</span>
+              </Link>
+
+              <Link
+                to="/register"
+                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              >
+                Sign Up
+              </Link>
+            </>
           ) : (
             <>
-              <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">
-                {user.username}
-              </span>
+              <div className="hidden items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 sm:flex">
+                <UserIcon className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  {user.username}
+                </span>
+              </div>
 
               <button
                 onClick={handleLogout}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-red-100 hover:text-red-600"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-600"
               >
-                Logout
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           )}
         </div>
+      </nav>
+
+      <div className="flex justify-around border-t border-gray-200 py-2 md:hidden">
+        <NavItem
+          to="/"
+          icon={<Home className="h-5 w-5" />}
+          label="Home"
+          active={isActive("/")}
+          mobile
+        />
+        <NavItem
+          to="/bookmarks"
+          icon={<Bookmark className="h-5 w-5" />}
+          label="Saved"
+          active={isActive("/bookmarks")}
+          mobile
+        />
+        <NavItem
+          to="/folders"
+          icon={<FolderOpen className="h-5 w-5" />}
+          label="Folders"
+          active={isActive("/folders")}
+          mobile
+        />
       </div>
-    </nav>
+    </header>
   );
 }
 
