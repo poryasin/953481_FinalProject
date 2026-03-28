@@ -3,3 +3,8 @@
 resources
 backend/search/__pycache__
 backend/.env
+frontend/tsconfig.node.json
+frontend/tsconfig.json
+frontend/tsconfig.app.json
+frontend/package.json
+frontend/package-lock.json
