@@ -2,3 +2,4 @@
 .idea
 resources
 backend/search/__pycache__
+backend/.env
