@@ -62,13 +62,16 @@ function Navbar() {
     }
   }, [location.pathname]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -81,6 +84,7 @@ function Navbar() {
 
         <div className="hidden items-center gap-1 md:flex">
           <NavItem
+            to="/"
             icon={<Home className="h-4 w-4" />}
             label="Home"
             active={isActive("/")}

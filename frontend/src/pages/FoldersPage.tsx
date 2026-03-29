@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { FolderOpen, Plus } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { API_BASE_URL } from "../api/config";
-import { useNavigate } from "react-router-dom";
 
 type Folder = {
   folder_id: number;
@@ -75,6 +75,50 @@ function FoldersPage() {
   useEffect(() => {
     fetchFolders();
   }, []);
+
+  const handleDeleteFolder = async (folderId: number) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this folder?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const tokenFromStorage = localStorage.getItem("token");
+
+      if (!tokenFromStorage) {
+        setError("Please login first to delete a folder");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${tokenFromStorage}`,
+        },
+      });
+
+      const text = await res.text();
+      let data: any = {};
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || data.msg || "Failed to delete folder");
+      }
+
+      setFolders((prev) => prev.filter((folder) => folder.folder_id !== folderId));
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to delete folder");
+      }
+    }
+  };
 
   const handleCreateFolder = async () => {
     const tokenFromStorage = localStorage.getItem("token");
@@ -189,26 +233,38 @@ function FoldersPage() {
         {!loading && folders.length > 0 ? (
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {folders.map((folder) => (
-              <motion.button
+              <motion.div
                 key={folder.folder_id}
-                type="button"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                onClick={() => handleOpenFolder(folder.folder_id)}
-                className="group relative rounded-2xl border border-gray-200 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-md"
+                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
               >
-                <FolderOpen className="h-10 w-10 text-orange-400" />
-                <h3 className="mt-3 text-lg font-semibold text-gray-900">
-                  {folder.folder_name}
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Folder ID: {folder.folder_id}
-                  {folder.created_at ? ` · ${folder.created_at}` : ""}
-                </p>
-                <p className="mt-3 text-sm font-medium text-orange-500">
-                  View bookmarks →
-                </p>
-              </motion.button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenFolder(folder.folder_id)}
+                  className="group w-full text-left"
+                >
+                  <FolderOpen className="h-10 w-10 text-orange-400" />
+                  <h3 className="mt-3 text-lg font-semibold text-gray-900">
+                    {folder.folder_name}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Folder ID: {folder.folder_id}
+                    {folder.created_at ? ` · ${folder.created_at}` : ""}
+                  </p>
+                  <p className="mt-3 text-sm font-medium text-orange-500">
+                    View bookmarks →
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFolder(folder.folder_id)}
+                  className="mt-4 rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+                >
+                  Delete Folder
+                </button>
+              </motion.div>
             ))}
           </div>
         ) : (

@@ -2,6 +2,7 @@ from config.db import db
 from datetime import datetime
 
 
+
 class Folder(db.Model):
     __tablename__ = "folders"
 
@@ -17,3 +18,4 @@ class Folder(db.Model):
             "folder_name": self.folder_name,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+

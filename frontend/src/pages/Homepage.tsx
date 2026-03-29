@@ -406,29 +406,24 @@ function Homepage() {
   }, [token]);
 
   const fetchRandomRecipes = async (): Promise<void> => {
-    if (isLoggedIn) {
-      setRandomRecipes([]);
-      return;
+  try {
+    setRandomLoading(true);
+
+    const res = await fetch(`${API_BASE_URL}/recipes/random?size=8`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch random recipes");
     }
 
-    try {
-      setRandomLoading(true);
-
-      const res = await fetch(`${API_BASE_URL}/recipes/random?size=8`);
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch random recipes");
-      }
-
-      const data: Recipe[] = await res.json();
-      setRandomRecipes(data);
-    } catch (err) {
-      console.error(err);
-      setRandomRecipes([]);
-    } finally {
-      setRandomLoading(false);
-    }
-  };
+    const data: Recipe[] = await res.json();
+    setRandomRecipes(data);
+  } catch (err) {
+    console.error(err);
+    setRandomRecipes([]);
+  } finally {
+    setRandomLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchRandomRecipes();
@@ -581,7 +576,7 @@ useEffect(() => {
 
 
   const sourceRecipes =
-    results.length > 0 ? results : !isLoggedIn ? randomRecipes : [];
+  results.length > 0 ? results : randomRecipes;
 
   const categories = [
     "All",
