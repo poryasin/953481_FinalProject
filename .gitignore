@@ -12,3 +12,5 @@ backend/config/__pycache__
 backend/models/__pycache__
 backend/routes/__pycache__
 backend/instance/auth.db
+backend/model_artifacts
+backend/services/__pycache__

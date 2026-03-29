@@ -12,15 +12,17 @@ from search.elastic_search import search_recipes
 from routes.bookmark import bookmark_bp
 from routes.folder import folder_bp
 from routes.recipe import recipe_bp
+from routes.recommendation import recommendation_bp
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app,
-     origins=["http://localhost:5173"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"],
-     supports_credentials=True
+CORS(
+    app,
+    origins=["http://localhost:5173"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    supports_credentials=True
 )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
@@ -38,6 +40,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(bookmark_bp)
 app.register_blueprint(folder_bp)
 app.register_blueprint(recipe_bp)
+app.register_blueprint(recommendation_bp)
+
 
 @app.route("/")
 def home():
@@ -55,8 +59,22 @@ def search_api():
         })
 
     try:
-        results = search_recipes(q)
-        return jsonify(results), 200
+        data = search_recipes(q)
+
+        # รองรับ 2 กรณี:
+        # 1) search_recipes คืน {"results": [...], "suggestions": [...]}
+        # 2) search_recipes คืน list อย่างเดียว
+        if isinstance(data, dict):
+            return jsonify({
+                "results": data.get("results", []),
+                "suggestions": data.get("suggestions", [])
+            }), 200
+
+        return jsonify({
+            "results": data if isinstance(data, list) else [],
+            "suggestions": []
+        }), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

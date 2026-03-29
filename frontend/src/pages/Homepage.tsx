@@ -361,6 +361,8 @@ function Homepage() {
   const [randomLoading, setRandomLoading] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<any>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
@@ -431,6 +433,49 @@ function Homepage() {
   useEffect(() => {
     fetchRandomRecipes();
   }, [isLoggedIn]);
+
+const fetchRecommendations = async (folderId?: number) => {
+  if (!token) return;
+
+  try {
+    setLoadingRecommendations(true);
+
+    let url = `${API_BASE_URL}/recommendations`;
+    if (folderId && folderId > 0) {
+      url += `?folder_id=${folderId}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to fetch recommendations");
+    }
+
+    setRecommendations(data);
+  } catch (err) {
+    console.error("Recommendation error:", err);
+    setRecommendations(null);
+  } finally {
+    setLoadingRecommendations(false);
+  }
+};
+useEffect(() => {
+  if (isLoggedIn) {
+    fetchRecommendations();
+  }
+}, [isLoggedIn]);
+
+useEffect(() => {
+  if (isLoggedIn && selectedFolderId > 0) {
+    fetchRecommendations(selectedFolderId);
+  }
+}, [selectedFolderId]);
 
   const handleSearch = async (): Promise<void> => {
     if (!query.trim()) {
@@ -649,19 +694,8 @@ function Homepage() {
           </p>
         )}
 
-        {!loading && !error && isLoggedIn && results.length === 0 && (
-          <div className="rounded-2xl bg-gray-50 p-8 text-center ring-1 ring-gray-200">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Start your search
-            </h2>
-            <p className="mt-2 text-gray-600">
-              Search by dish name, ingredients, or cooking process.
-            </p>
-          </div>
-        )}
-
-        {!loading && suggestions.length > 0 && (
-  <div className="mb-4 rounded-xl bg-orange-50 p-4 text-orange-700 shadow-sm ring-1 ring-orange-200">
+      {!loading && suggestions.length > 0 && (
+  <div className="mb-6 rounded-xl bg-orange-50 p-4 text-orange-700 shadow-sm ring-1 ring-orange-200">
     <p className="text-sm">
       Did you mean{" "}
       <button
@@ -698,77 +732,189 @@ function Homepage() {
   </div>
 )}
 
-        {!isLoggedIn && (
-          <section className="mt-2">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {results.length > 0 ? "Search Results" : "Random Recipes"}
-              </h2>
+{isLoggedIn && results.length === 0 && (
+  <section className="mt-2 space-y-10">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-2xl font-bold text-gray-900">
+        Personalized Recommendations
+      </h2>
+    </div>
 
-              {!results.length && (
-                <button
-                  onClick={fetchRandomRecipes}
-                  className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+    {loadingRecommendations ? (
+      <p className="rounded-xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
+        Loading recommendations...
+      </p>
+    ) : (
+      <>
+        <div>
+          <h3 className="mb-4 text-xl font-semibold text-gray-900">
+            From all folders
+          </h3>
+
+          {recommendations?.all_folders?.length ? (
+            <div className="flex gap-6 overflow-x-auto pb-2">
+              {recommendations.all_folders.map((item: any, index: number) => (
+                <div
+                  key={item.recipe_id ?? `all-${index}`}
+                  className="w-[320px] min-w-[320px] flex-shrink-0"
                 >
-                  Random Again
-                </button>
-              )}
+                  <RecipeCard
+                    recipe={item}
+                    onViewDetails={openRecipeModal}
+                  />
+                </div>
+              ))}
             </div>
+          ) : (
+            <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+              No recommendations from all folders yet.
+            </p>
+          )}
+        </div>
 
-            {randomLoading && results.length === 0 ? (
-              <p className="rounded-xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
-                Loading random recipes...
-              </p>
-            ) : filteredRecipes.length === 0 ? (
-              <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
-                No recipes found.
-              </p>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredRecipes.map((item, index) => (
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-xl font-semibold text-gray-900">
+              From selected folder
+            </h3>
+
+            {folders.length > 0 && (
+              <select
+                value={selectedFolderId}
+                onChange={(e) => setSelectedFolderId(Number(e.target.value))}
+                className="rounded-xl border border-gray-300 px-4 py-2 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
+              >
+                {folders.map((folder) => (
+                  <option key={folder.folder_id} value={folder.folder_id}>
+                    {folder.folder_name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {recommendations?.selected_folder_recommendations?.length ? (
+            <div className="flex gap-6 overflow-x-auto pb-2">
+              {recommendations.selected_folder_recommendations.map((item: any, index: number) => (
+                <div
+                  key={item.recipe_id ?? `folder-${index}`}
+                  className="w-[320px] min-w-[320px] flex-shrink-0"
+                >
                   <RecipeCard
-                    key={
-                      item.recipe_id ??
-                      `${item.Name ?? item.name ?? "recipe"}-${index}`
-                    }
                     recipe={item}
                     onViewDetails={openRecipeModal}
                   />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+              No recommendations from this folder yet.
+            </p>
+          )}
+        </div>
 
-        {isLoggedIn && results.length > 0 && (
-          <section className="mt-2">
-            <h2 className="mb-4 text-2xl font-bold text-gray-900">
-              Search Results
-              <span className="ml-2 text-base font-normal text-gray-500">
-                ({filteredRecipes.length})
-              </span>
-            </h2>
+        <div>
+          <h3 className="mb-4 text-xl font-semibold text-gray-900">
+            Random dishes
+          </h3>
 
-            {filteredRecipes.length === 0 ? (
-              <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
-                No recipes found in this category.
-              </p>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredRecipes.map((item, index) => (
+          {recommendations?.random?.length ? (
+            <div className="flex gap-6 overflow-x-auto pb-2">
+              {recommendations.random.map((item: any, index: number) => (
+                <div
+                  key={item.recipe_id ?? `random-${index}`}
+                  className="w-[320px] min-w-[320px] flex-shrink-0"
+                >
                   <RecipeCard
-                    key={
-                      item.recipe_id ??
-                      `${item.Name ?? item.name ?? "recipe"}-${index}`
-                    }
                     recipe={item}
                     onViewDetails={openRecipeModal}
                   />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+              No random recommendations available.
+            </p>
+          )}
+        </div>
+      </>
+    )}
+  </section>
+)}
+
+{!isLoggedIn && (
+  <section className="mt-2">
+    <div className="mb-4 flex items-center justify-between">
+      <h2 className="text-2xl font-bold text-gray-900">
+        {results.length > 0 ? "Search Results" : "Random Recipes"}
+      </h2>
+
+      {!results.length && (
+        <button
+          onClick={fetchRandomRecipes}
+          className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+        >
+          Random Again
+        </button>
+      )}
+    </div>
+
+    {randomLoading && results.length === 0 ? (
+      <p className="rounded-xl bg-white p-4 text-center text-gray-600 shadow-sm ring-1 ring-gray-200">
+        Loading random recipes...
+      </p>
+    ) : filteredRecipes.length === 0 ? (
+      <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+        No recipes found.
+      </p>
+    ) : (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredRecipes.map((item, index) => (
+          <RecipeCard
+            key={
+              item.recipe_id ??
+              `${item.Name ?? item.name ?? "recipe"}-${index}`
+            }
+            recipe={item}
+            onViewDetails={openRecipeModal}
+          />
+        ))}
+      </div>
+    )}
+  </section>
+)}
+
+{isLoggedIn && results.length > 0 && (
+  <section className="mt-2">
+    <h2 className="mb-4 text-2xl font-bold text-gray-900">
+      Search Results
+      <span className="ml-2 text-base font-normal text-gray-500">
+        ({filteredRecipes.length})
+      </span>
+    </h2>
+
+    {filteredRecipes.length === 0 ? (
+      <p className="rounded-xl bg-white p-4 text-center text-gray-500 shadow-sm ring-1 ring-gray-200">
+        No recipes found in this category.
+      </p>
+    ) : (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredRecipes.map((item, index) => (
+          <RecipeCard
+            key={
+              item.recipe_id ??
+              `${item.Name ?? item.name ?? "recipe"}-${index}`
+            }
+            recipe={item}
+            onViewDetails={openRecipeModal}
+          />
+        ))}
+      </div>
+    )}
+  </section>
+)}
       </main>
 
       <RecipeModal
