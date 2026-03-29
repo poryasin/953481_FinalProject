@@ -14,3 +14,6 @@ backend/routes/__pycache__
 backend/instance/auth.db
 backend/model_artifacts
 backend/services/__pycache__
+test/__pycache__
+backend/.DS_Store
+.DS_Store
